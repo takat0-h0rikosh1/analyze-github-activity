@@ -1,8 +1,7 @@
-# GitHub API client -------------------------------------------------
+# GitHub API クライアント -------------------------------------------------
 #
-# Provides an object-oriented wrapper around the GitHub REST API. The client
-# consumes the shared Config instance defined in `scripts/config/settings.R`
-# so that authentication and environment-specific settings remain centralized.
+# GitHub REST API を操作するためのクラスベースのラッパーを提供する。
+# 認証情報や実行環境に依存する設定は `scripts/config/settings.R` の Config で集中管理する。
 
 ensure_config_loaded <- function() {
   if (!exists("config_instance", mode = "function")) {
@@ -161,7 +160,7 @@ github_client <- function() {
   .github_client_singleton()
 }
 
-# Convenience wrappers -------------------------------------------------------
+# 便利関数 -------------------------------------------------------------
 
 github_agent_users <- function() {
   github_client()$agent_users()
@@ -194,7 +193,7 @@ github_perform <- function(req) {
   github_client()$perform(req)
 }
 
-# Helpers -------------------------------------------------------------------
+# 補助関数 -------------------------------------------------------------
 
 github_error_details <- function(resp) {
   message <- NULL

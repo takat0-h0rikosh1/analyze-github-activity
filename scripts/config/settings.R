@@ -1,8 +1,7 @@
-# Environment configuration -------------------------------------------------
+# 環境設定の共有 -------------------------------------------------
 #
-# Collects all runtime configuration derived from environment variables.
-# The Config class can be instantiated via `Config$new()` and shared across
-# modules to access settings without repeatedly reading environment values.
+# 環境変数から設定値を読み込み、Config クラスで一元管理する。
+# `Config$new()` で生成したインスタンスを共通化し、各モジュールが同じ設定を参照できるようにする。
 
 Config <- setRefClass(
   "Config",
