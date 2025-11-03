@@ -1,0 +1,6 @@
+.env
+output/files/
+output/viz/
+*.csv
+*.png
+*.jpg
