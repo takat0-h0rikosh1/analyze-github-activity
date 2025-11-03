@@ -1,13 +1,29 @@
 # GitHub API クライアント -------------------------------------------------
 #
-# GitHub REST API を操作するためのクラスベースのラッパーを提供する。
-# 認証情報や実行環境に依存する設定は `scripts/config/settings.R` の Config で集中管理する。
+# GitHub REST API を操作するためのクラスベースのラッパー。認証情報や環境設定は
+# `scripts/config/settings.R` の Config インスタンスから取得し、ここで集約利用する。
+
+source_common_utils <- local({
+  loaded <- FALSE
+  function() {
+    if (!loaded) {
+      utils_path <- file.path("scripts", "common", "utils.R")
+      if (!file.exists(utils_path)) {
+        cli::cli_abort("共通ユーティリティが見つかりません: {utils_path}")
+      }
+      source(utils_path, local = FALSE)
+      loaded <<- TRUE
+    }
+  }
+})
+
+source_common_utils()
 
 ensure_config_loaded <- function() {
   if (!exists("config_instance", mode = "function")) {
     cfg_path <- file.path("scripts", "config", "settings.R")
     if (!file.exists(cfg_path)) {
-      cli::cli_abort("Configuration module not found at {cfg_path}.")
+      cli::cli_abort("設定モジュールが見つかりません: {cfg_path}")
     }
     sys.source(cfg_path, envir = topenv())
   }
@@ -86,7 +102,7 @@ GitHubClient <- setRefClass(
         httr2::req_perform(req),
         error = function(err) {
           cli::cli_abort(
-            "GitHub API request failed to execute: {err$message}",
+            "GitHub API の呼び出しに失敗しました: {err$message}",
             parent = err
           )
         }
@@ -95,10 +111,10 @@ GitHubClient <- setRefClass(
       tryCatch(
         httr2::resp_check_status(resp),
         error = function(err) {
-          details <- github_error_details(resp)
+          details <- .error_details(resp)
           cli::cli_abort(
             c(
-              "GitHub API returned an error.",
+              "GitHub API からエラーが返りました。",
               i = details$message,
               if (!is.null(details$documentation_url)) {
                 c("i" = details$documentation_url)
@@ -128,20 +144,80 @@ GitHubClient <- setRefClass(
         return(httr2::resp_body_json(resp, simplifyVector = FALSE))
       }
 
-      results <- as_list(httr2::resp_body_json(resp, simplifyVector = FALSE))
-      next_link <- github_next_link(resp)
+      results <- .as_list(httr2::resp_body_json(resp, simplifyVector = FALSE))
+      next_link <- .next_link(resp)
 
       page <- 1L
       while (!is.null(next_link) && page < max_pages) {
         req <- request_from_url(next_link)
         resp <- perform(req)
-        chunk <- as_list(httr2::resp_body_json(resp, simplifyVector = FALSE))
+        chunk <- .as_list(httr2::resp_body_json(resp, simplifyVector = FALSE))
         results <- c(results, chunk)
-        next_link <- github_next_link(resp)
+        next_link <- .next_link(resp)
         page <- page + 1L
       }
 
       results
+    },
+
+    repo_path = function(repo) {
+      parts <- trimws(strsplit(repo, "/", fixed = TRUE)[[1]])
+      if (length(parts) != 2L || any(!nzchar(parts))) {
+        cli::cli_abort("リポジトリは `owner/name` 形式で指定してください: {repo}")
+      }
+      paste(vapply(parts, url_encode, character(1)), collapse = "/")
+    },
+
+    iso_time = function(x) {
+      iso_datetime(x)
+    },
+
+    parse_timestamp = function(x) {
+      parse_iso_datetime(x)
+    },
+
+    .error_details = function(resp) {
+      message <- NULL
+      docs <- NULL
+
+      content <- tryCatch(
+        httr2::resp_body_json(resp, simplifyVector = TRUE),
+        error = function(...) NULL
+      )
+
+      if (is.list(content)) {
+        message <- content$message %||% content$error %||% "Unknown error response."
+        docs <- content$documentation_url %||% NULL
+      }
+
+      list(
+        message = message %||% sprintf("HTTP %s", httr2::resp_status_desc(resp)),
+        documentation_url = docs
+      )
+    },
+
+    .next_link = function(resp) {
+      link <- httr2::resp_headers(resp)[["link"]]
+      if (is.null(link) || !nzchar(link)) {
+        return(NULL)
+      }
+
+      parts <- strsplit(link, ",")[[1]]
+      for (part in parts) {
+        part <- trimws(part)
+        if (grepl('rel="next"', part, fixed = TRUE)) {
+          matches <- sub("^.*<([^>]+)>.*$", "\\1", part)
+          if (!identical(matches, part)) {
+            return(matches)
+          }
+        }
+      }
+
+      NULL
+    },
+
+    .as_list = function(x) {
+      as_list_safe(x)
     }
   )
 )
@@ -158,124 +234,6 @@ GitHubClient <- setRefClass(
 
 github_client <- function() {
   .github_client_singleton()
-}
-
-# 便利関数 -------------------------------------------------------------
-
-github_agent_users <- function() {
-  github_client()$agent_users()
-}
-
-github_org <- function() {
-  github_client()$org()
-}
-
-github_get <- function(endpoint,
-                        query = list(),
-                        paginate = TRUE,
-                        per_page = 100,
-                        max_pages = Inf) {
-  github_client()$get(endpoint, query, paginate, per_page, max_pages)
-}
-
-github_request <- function(endpoint,
-                            query = list(),
-                            method = "GET",
-                            body = NULL) {
-  github_client()$request(endpoint, query, method, body)
-}
-
-github_request_from_url <- function(url) {
-  github_client()$request_from_url(url)
-}
-
-github_perform <- function(req) {
-  github_client()$perform(req)
-}
-
-# 補助関数 -------------------------------------------------------------
-
-github_error_details <- function(resp) {
-  message <- NULL
-  docs <- NULL
-
-  content <- tryCatch(
-    httr2::resp_body_json(resp, simplifyVector = TRUE),
-    error = function(...) NULL
-  )
-
-  if (is.list(content)) {
-    message <- content$message %||% content$error %||% "Unknown error response."
-    docs <- content$documentation_url %||% NULL
-  }
-
-  list(
-    message = message %||% sprintf("HTTP %s", httr2::resp_status_desc(resp)),
-    documentation_url = docs
-  )
-}
-
-github_next_link <- function(resp) {
-  link <- httr2::resp_headers(resp)[["link"]]
-  if (is.null(link) || !nzchar(link)) {
-    return(NULL)
-  }
-
-  parts <- strsplit(link, ",")[[1]]
-  for (part in parts) {
-    part <- trimws(part)
-    if (grepl('rel="next"', part, fixed = TRUE)) {
-      matches <- sub("^.*<([^>]+)>.*$", "\\1", part)
-      if (!identical(matches, part)) {
-        return(matches)
-      }
-    }
-  }
-
-  NULL
-}
-
-as_list <- function(x) {
-  if (is.null(x)) {
-    list()
-  } else if (is.list(x)) {
-    x
-  } else {
-    list(x)
-  }
-}
-
-github_encode <- function(x) {
-  utils::URLencode(x, reserved = TRUE)
-}
-
-github_repo_path <- function(repo) {
-  parts <- strsplit(repo, "/", fixed = TRUE)[[1]]
-  parts <- trimws(parts)
-  if (length(parts) != 2L || any(!nzchar(parts))) {
-    cli::cli_abort("Repository must be supplied as `owner/name`. Got: {repo}")
-  }
-  paste(github_encode(parts), collapse = "/")
-}
-
-github_iso_time <- function(x) {
-  if (is.null(x)) {
-    return(NULL)
-  }
-  if (inherits(x, "Date")) {
-    return(sprintf("%sT00:00:00Z", format(x, "%Y-%m-%d")))
-  }
-  if (!inherits(x, "POSIXt")) {
-    cli::cli_abort("Time value must be Date or POSIXt. Got: {class(x)[1]}")
-  }
-  format(as.POSIXct(x, tz = "UTC"), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-}
-
-github_parse_timestamp <- function(x) {
-  if (is.null(x)) {
-    return(NULL)
-  }
-  as.POSIXct(x, format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
 }
 
 `%||%` <- function(x, y) {
