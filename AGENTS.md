@@ -64,13 +64,16 @@
 - PR 取得処理で Coding Agent／開発メンバーを区別するロジックの実装
 - 集計ロジックの実装と QuickSight 用 CSV の生成
 - 集計結果を用いた可視化・グラフ生成機能の実装
-- 責務に応じて `scripts/`, `R/`, `output/files/`, `output/viz/` などを分割しコードベースの見通しを確保
+- 責務に応じて `scripts/` 配下のサブディレクトリや `output/files/`, `output/viz/` を分割しコードベースの見通しを確保
 
 ## ディレクトリ構成方針
-- `scripts/`: CLI エントリポイントやワークフロー制御用スクリプト (fetch, aggregate, export など)
-- `R/`: API 呼び出し・データ整形・集計・可視化ロジックの共通関数群
+- `scripts/`: すべての R スクリプトを配置するルート。役割ごとにサブディレクトリを設ける
+  - `scripts/api/`: GitHub API 呼び出しや認証ラッパー
+  - `scripts/processing/`: データ整形・集計ロジック
+  - `scripts/pipeline/`: CLI エントリポイントやワークフロー制御
+  - `scripts/viz/`: 可視化・レポート生成
 - `output/files/`: QuickSight に渡す CSV や中間生成物を保存
-- `output/viz/`: R で生成したグラフやレポート画像を保存
+- `output/viz/`: 可視化ファイルやレポート画像を保存
 - `config/` (任意): 設定ファイルやテンプレートを管理
 
 ## 環境変数
