@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: analyze-github-activity
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      - RENV_PATHS_CACHE=/renv/cache
+    command: ["R", "-q"]

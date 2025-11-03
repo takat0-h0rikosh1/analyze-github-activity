@@ -1,0 +1,12 @@
+.git
+.gitignore
+renv/library/
+renv/staging/
+renv/local/
+renv/cellar/
+renv/sandbox/
+.Rhistory
+.RData
+*.csv
+*.png
+*.jpg
