@@ -5,7 +5,7 @@
 - QuickSight でダッシュボードを構築するため、CSV などアップロード可能なデータソースを生成する
 
 ## 用語定義
-- **T0**: AI Coding Agent を正式導入した基準日。2025/06/18（Claude Code 導入日）を用いる。
+- **T0**: AI Coding Agent を正式導入した基準日。既定値は 2025/06/18（Claude Code 導入日）だが `AI_T0` 環境変数で上書き可能。
 - **pre_ai**: `period_start` が T0 より前のデータで、過去 1 年分（2024/06/18 〜 2025/06/17）を取得する。
 - **post_ai**: `period_start` が T0 当日以降のデータで、T0 から現在日時までを取得する。
 
@@ -25,7 +25,7 @@
 - GitHub の Push、Pull Request、Review、Review Comment などの開発活動
 - Pull Request 系の指標は Coding Agent と開発メンバーを識別できる形で取得・分類
 - Issue 系イベントは使用頻度が低いため分析対象外
-- AI 導入日 (`T0`) を境界に `pre_ai` / `post_ai` フェーズを判定
+- AI 導入日 (`T0`) を境界に `pre_ai` / `post_ai` フェーズを判定（`AI_T0` 環境変数で上書き可能）
 
 ## 成果物
 - QuickSight へインポート可能な CSV データセット
