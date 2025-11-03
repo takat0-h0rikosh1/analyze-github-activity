@@ -32,6 +32,9 @@
 - 同 CSV を生成する R スクリプト／ノートブック
 - スクリプト実行時に生成する可視化（例: Pull Request 活動の推移グラフ）
 
+## 設計指針と ADR
+- 詳細な責務分離と OOP 方針は `adr/001_project_structure.md` を参照
+
 ## 可視化対象指標
 - **開発速度・生産性**
   - コミット数（日次 / 週次 / 月次）
@@ -57,24 +60,7 @@
 3. 集計結果に `pre_ai` / `post_ai` を付与した CSV を出力し、QuickSight に取り込む
 4. 同集計結果を基に R 内で可視化を作成し、PNG などで出力する
 
-## 直近のタスク
-- R プロジェクトおよび `renv` 環境の初期化
-- Dockerfile を作成し、R 環境＋renv で再現可能な実行手段を整備
-- GitHub API 取得スクリプトの実装 (Issues 系 API は呼び出さない)
-- PR 取得処理で Coding Agent／開発メンバーを区別するロジックの実装
-- 集計ロジックの実装と QuickSight 用 CSV の生成
-- 集計結果を用いた可視化・グラフ生成機能の実装
-- 責務に応じて `scripts/` 配下のサブディレクトリや `output/files/`, `output/viz/` を分割しコードベースの見通しを確保
 
-## ディレクトリ構成方針
-- `scripts/`: すべての R スクリプトを配置するルート。役割ごとにサブディレクトリを設ける
-  - `scripts/api/`: GitHub API 呼び出しや認証ラッパー
-  - `scripts/processing/`: データ整形・集計ロジック
-  - `scripts/pipeline/`: CLI エントリポイントやワークフロー制御
-  - `scripts/viz/`: 可視化・レポート生成
-  - `scripts/config/`: 環境変数の読み込みや設定オブジェクト (Config クラス) を管理
-- `output/files/`: QuickSight に渡す CSV や中間生成物を保存
-- `output/viz/`: 可視化ファイルやレポート画像を保存
 
 ## 環境変数
 | 変数名              | 必須 | 用途・説明                                                                                 |
