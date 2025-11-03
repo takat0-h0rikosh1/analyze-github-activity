@@ -72,9 +72,9 @@
   - `scripts/processing/`: データ整形・集計ロジック
   - `scripts/pipeline/`: CLI エントリポイントやワークフロー制御
   - `scripts/viz/`: 可視化・レポート生成
+  - `scripts/config/`: 環境変数の読み込みや設定オブジェクト (Config クラス) を管理
 - `output/files/`: QuickSight に渡す CSV や中間生成物を保存
 - `output/viz/`: 可視化ファイルやレポート画像を保存
-- `config/`: 環境変数の読み込みや設定オブジェクト (Config クラス) を管理
 
 ## 環境変数
 | 変数名              | 必須 | 用途・説明                                                                                 |

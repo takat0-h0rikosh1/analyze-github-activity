@@ -6,7 +6,7 @@
 
 ensure_config_loaded <- function() {
   if (!exists("config_instance", mode = "function")) {
-    cfg_path <- file.path("config", "settings.R")
+    cfg_path <- file.path("scripts", "config", "settings.R")
     if (!file.exists(cfg_path)) {
       cli::cli_abort("Configuration module not found at {cfg_path}.")
     }
