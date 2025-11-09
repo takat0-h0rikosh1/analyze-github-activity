@@ -31,9 +31,38 @@ Config <- setRefClass(
       api_url <- .self$normalize_base_url(api_url)
 
       agent_users <- .self$parse_list_env("GITHUB_AGENT_USERS")
+      target_repos <- .self$parse_list_env("GITHUB_TARGET_REPOS")
+      approval_thresholds_env <- .self$parse_int_map_env("GITHUB_APPROVAL_THRESHOLDS")
+      approval_thresholds_file <- .self$parse_int_map_file(
+        Sys.getenv("GITHUB_APPROVAL_THRESHOLDS_FILE", unset = "")
+      )
+      approval_thresholds <- approval_thresholds_file
+      if (is.null(approval_thresholds)) {
+        approval_thresholds <- approval_thresholds_env
+      } else if (!is.null(approval_thresholds_env)) {
+        approval_thresholds <- modifyList(approval_thresholds, approval_thresholds_env)
+      }
+      if (is.null(approval_thresholds) || !length(approval_thresholds)) {
+        approval_thresholds <- NULL
+      }
       user_agent <- Sys.getenv("GITHUB_USER_AGENT", unset = "")
       if (!nzchar(user_agent)) {
         user_agent <- "analyze-github-activity/0.1"
+      }
+
+      request_pause <- suppressWarnings(as.numeric(Sys.getenv("GITHUB_REQUEST_PAUSE_SEC", unset = "0.25")))
+      if (is.na(request_pause) || request_pause < 0) {
+        request_pause <- 0
+      }
+
+      rate_threshold <- suppressWarnings(as.integer(Sys.getenv("GITHUB_RATE_THRESHOLD", unset = "50")))
+      if (is.na(rate_threshold) || rate_threshold < 0) {
+        rate_threshold <- 0
+      }
+
+      rate_padding <- suppressWarnings(as.numeric(Sys.getenv("GITHUB_RATE_RESET_PADDING_SEC", unset = "5")))
+      if (is.na(rate_padding) || rate_padding < 0) {
+        rate_padding <- 0
       }
 
       list(
@@ -41,7 +70,12 @@ Config <- setRefClass(
         org = org,
         api_url = api_url,
         agent_users = agent_users,
-        user_agent = user_agent
+        target_repos = target_repos,
+        approval_thresholds = approval_thresholds,
+        user_agent = user_agent,
+        request_pause_sec = request_pause,
+        rate_limit_threshold = rate_threshold,
+        rate_limit_padding_sec = rate_padding
       )
     },
 
@@ -90,11 +124,52 @@ Config <- setRefClass(
       parts[nzchar(parts)]
     },
 
+    parse_int_map_env = function(name, default = NULL) {
+      value <- Sys.getenv(name, unset = NA_character_)
+      if (is.na(value) || !nzchar(value)) {
+        return(default)
+      }
+      entries <- trimws(strsplit(value, ",", fixed = TRUE)[[1]])
+      parsed <- .self$parse_int_map_entries(entries)
+      if (!length(parsed)) default else parsed
+    },
+
+    parse_int_map_file = function(path) {
+      if (!nzchar(path) || !file.exists(path)) {
+        return(NULL)
+      }
+      lines <- readLines(path, warn = FALSE)
+      lines <- trimws(lines)
+      lines <- lines[nzchar(lines) & !grepl("^#", lines)]
+      if (!length(lines)) {
+        return(NULL)
+      }
+      parsed <- .self$parse_int_map_entries(lines)
+      if (!length(parsed)) NULL else parsed
+    },
+
+    parse_int_map_entries = function(entries) {
+      result <- list()
+      for (entry in entries) {
+        if (!nzchar(entry) || !grepl("=", entry, fixed = TRUE)) {
+          next
+        }
+        parts <- strsplit(entry, "=", fixed = TRUE)[[1]]
+        key <- trimws(parts[1])
+        val <- suppressWarnings(as.integer(trimws(parts[2])))
+        if (!nzchar(key) || is.na(val)) {
+          next
+        }
+        result[[key]] <- as.integer(val)
+      }
+      result
+    },
+
     normalize_base_url = function(url) {
       if (!nzchar(url)) {
         return("https://api.github.com")
       }
-      cleaned <- sub("/+\Z", "", url)
+      cleaned <- sub("/+$", "", url)
       if (!nzchar(cleaned)) "https://api.github.com" else cleaned
     }
   )

@@ -98,6 +98,11 @@ GitHubClient <- setRefClass(
     },
 
     perform = function(req) {
+      pause <- settings()$request_pause_sec %||% 0
+      if (!is.null(pause) && pause > 0) {
+        Sys.sleep(pause)
+      }
+
       resp <- tryCatch(
         httr2::req_perform(req),
         error = function(err) {
@@ -107,6 +112,8 @@ GitHubClient <- setRefClass(
           )
         }
       )
+
+      .self$rate_limit_backoff(resp)
 
       tryCatch(
         httr2::resp_check_status(resp),
@@ -214,6 +221,31 @@ GitHubClient <- setRefClass(
       }
 
       NULL
+    },
+
+    rate_limit_backoff = function(resp) {
+      headers <- httr2::resp_headers(resp)
+      remaining_raw <- headers[["x-ratelimit-remaining"]] %||% NA_character_
+      remaining <- suppressWarnings(as.integer(remaining_raw))
+      threshold <- settings()$rate_limit_threshold %||% 0
+
+      if (is.na(remaining) || remaining > threshold || threshold <= 0) {
+        return(invisible(NULL))
+      }
+
+      reset_raw <- headers[["x-ratelimit-reset"]] %||% NA_character_
+      reset_epoch <- suppressWarnings(as.numeric(reset_raw))
+      padding <- settings()$rate_limit_padding_sec %||% 0
+
+      if (is.na(reset_epoch)) {
+        return(invisible(NULL))
+      }
+
+      wait_sec <- max(reset_epoch - as.numeric(Sys.time()) + padding, padding, 0)
+      if (wait_sec > 0) {
+        cli::cli_alert_info("GitHub API rate limit 残り {remaining}; {round(wait_sec, 1)} 秒待機します。")
+        Sys.sleep(wait_sec)
+      }
     },
 
     .as_list = function(x) {

@@ -10,5 +10,5 @@ services:
     env_file:
       - .env
     environment:
-      RENV_PATHS_CACHE: /renv/cache
+      RENV_PATHS_CACHE: /workspace/renv/cache
     command: ["R", "-q"]

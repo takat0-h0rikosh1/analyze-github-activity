@@ -1,6 +1,7 @@
 .env
 output/files/
 output/viz/
+renv/cache/
 *.csv
 *.png
 *.jpg
