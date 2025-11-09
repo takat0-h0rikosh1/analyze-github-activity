@@ -49,18 +49,18 @@ main <- function() {
   cli::cli_inform("メトリクス CSV を出力しました: {data_path}")
 
   plot_specs <- list(
-    list(metric = "pr_count", file = "pr_trends.png", aggregation = "sum", title = "Pull Request 件数推移", y_label = "PR 件数"),
-    list(metric = "commit_count", file = "commit_trends.png", aggregation = "sum", title = "コミット数推移", y_label = "コミット数"),
-    list(metric = "lines_added", file = "lines_added.png", aggregation = "sum", title = "コード追加行数推移", y_label = "追加行数"),
-    list(metric = "lines_deleted", file = "lines_deleted.png", aggregation = "sum", title = "コード削除行数推移", y_label = "削除行数"),
-    list(metric = "pr_lead_time_hours", file = "pr_lead_time.png", aggregation = "mean", title = "PR リードタイム推移", y_label = "平均リードタイム（時間）"),
-    list(metric = "review_to_approval_time_hours", file = "review_to_approval_time.png", aggregation = "mean", title = "レビュー承認までの時間推移", y_label = "平均時間（時間）"),
-    list(metric = "review_response_time_hours", file = "review_response_time.png", aggregation = "mean", title = "レビュー応答時間推移", y_label = "平均時間（時間）"),
-    list(metric = "pr_first_review_time_hours", file = "first_review_time.png", aggregation = "mean", title = "PR 作成から最初のレビューまでの時間推移", y_label = "平均時間（時間）"),
-    list(metric = "pr_comment_count", file = "pr_comment_count.png", aggregation = "mean", title = "PR あたりのコメント数推移", y_label = "平均コメント数"),
-    list(metric = "review_iteration_count", file = "review_iteration_count.png", aggregation = "mean", title = "レビューイテレーション回数推移", y_label = "平均回数"),
-    list(metric = "bug_fix_ratio", file = "bug_fix_ratio.png", aggregation = "mean", title = "バグ修正 PR 割合推移", y_label = "割合", y_limits = c(0, 1)),
-    list(metric = "revert_pr_count", file = "revert_pr_count.png", aggregation = "sum", title = "リバートされた PR 数推移", y_label = "PR 数")
+    list(metric = "pr_count", file = "pr_trends.png", aggregation = "sum", y_label = "PR Count"),
+    list(metric = "commit_count", file = "commit_trends.png", aggregation = "sum", y_label = "Commit Count"),
+    list(metric = "lines_added", file = "lines_added.png", aggregation = "sum", y_label = "Lines Added"),
+    list(metric = "lines_deleted", file = "lines_deleted.png", aggregation = "sum", y_label = "Lines Deleted"),
+    list(metric = "pr_lead_time_hours", file = "pr_lead_time.png", aggregation = "mean", y_label = "Average Lead Time (hours)"),
+    list(metric = "review_to_approval_time_hours", file = "review_to_approval_time.png", aggregation = "mean", y_label = "Review to Approval (hours)"),
+    list(metric = "review_response_time_hours", file = "review_response_time.png", aggregation = "mean", y_label = "Review Response Time (hours)"),
+    list(metric = "pr_first_review_time_hours", file = "first_review_time.png", aggregation = "mean", y_label = "Time to First Review (hours)"),
+    list(metric = "pr_comment_count", file = "pr_comment_count.png", aggregation = "mean", y_label = "Comments per PR"),
+    list(metric = "review_iteration_count", file = "review_iteration_count.png", aggregation = "mean", y_label = "Review Iterations"),
+    list(metric = "bug_fix_ratio", file = "bug_fix_ratio.png", aggregation = "mean", y_label = "Bug Fix Ratio", y_limits = c(0, 1)),
+    list(metric = "revert_pr_count", file = "revert_pr_count.png", aggregation = "sum", y_label = "Reverted PRs")
   )
 
   purrr::walk(

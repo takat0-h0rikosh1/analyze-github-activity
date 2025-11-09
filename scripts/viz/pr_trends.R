@@ -19,6 +19,37 @@ suppressWarnings({
   }
 }
 
+build_plot_labels <- function(metric_name, interval, repos) {
+  lang <- tolower(Sys.getenv("PLOT_LABEL_LANGUAGE", unset = "en"))
+  repo_label <- if (length(repos) > 3) {
+    if (lang == "ja") {
+      sprintf("%s など %d 件", repos[1], length(repos))
+    } else {
+      sprintf("%s and %d more", repos[1], length(repos) - 1)
+    }
+  } else if (identical(repos, "ALL")) {
+    "ALL"
+  } else {
+    paste(repos, collapse = ", ")
+  }
+
+  if (lang == "ja") {
+    list(
+      title = sprintf("%s 指標推移", metric_name),
+      subtitle = sprintf("粒度: %s / リポジトリ: %s", interval, repo_label),
+      x_label = sprintf("集計期間（%s）", interval),
+      color_label = "アクター種別"
+    )
+  } else {
+    list(
+      title = sprintf("%s Trend", metric_name),
+      subtitle = sprintf("Interval: %s / Repos: %s", interval, repo_label),
+      x_label = sprintf("Period (%s)", interval),
+      color_label = "Actor Type"
+    )
+  }
+}
+
 ensure_settings_loaded <- function() {
   if (!exists("config_instance", mode = "function")) {
     cfg <- file.path("scripts", "config", "settings.R")
@@ -98,9 +129,9 @@ plot_metric_trend <- function(metrics,
     y_limits <- c(0, upper * 1.1)
   }
 
-  repo_label <- if (length(repos) > 3) sprintf("%s など %d 件", repos[1], length(repos)) else paste(repos, collapse = ", ")
-  title <- title %||% sprintf("%s 指標推移", metric_name)
-  subtitle <- sprintf("粒度: %s / リポジトリ: %s", interval, repo_label)
+  labels <- build_plot_labels(metric_name, interval, repos)
+  title <- title %||% labels$title
+  subtitle <- labels$subtitle
   date_breaks <- switch(
     interval,
     daily = "1 week",
@@ -132,9 +163,9 @@ plot_metric_trend <- function(metrics,
     labs(
       title = title,
       subtitle = subtitle,
-      x = sprintf("集計期間（%s）", interval),
+      x = labels$x_label,
       y = y_label,
-      color = "アクター種別"
+      color = labels$color_label
     ) +
     theme_minimal(base_size = 12) +
     theme(
