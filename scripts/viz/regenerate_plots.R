@@ -1,15 +1,9 @@
 #!/usr/bin/env Rscript
 
-# Pull Request データを取得し、QuickSight 用 CSV と可視化を生成するパイプライン。
+# 既存のメトリクスCSVから可視化のみを再生成するスクリプト
 
 suppressMessages(source("scripts/config/settings.R"))
-suppressMessages(source("scripts/processing/metrics_summary.R"))
 suppressMessages(source("scripts/viz/pr_trends.R"))
-
-fetch_env <- new.env(parent = globalenv())
-sys.source("scripts/pipeline/fetch_activity.R", envir = fetch_env)
-
-run_fetch_pipeline <- fetch_env$run_fetch_pipeline
 
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0) {
@@ -20,33 +14,21 @@ run_fetch_pipeline <- fetch_env$run_fetch_pipeline
 }
 
 main <- function() {
-  args <- commandArgs(trailingOnly = TRUE)
-  max_repo_pages <- 1L
-  max_pr_pages <- 1L
-
-  if (length(args) >= 1 && nzchar(args[[1]])) {
-    max_repo_pages <- as.integer(args[[1]])
-  }
-  if (length(args) >= 2 && nzchar(args[[2]])) {
-    max_pr_pages <- as.integer(args[[2]])
-  }
-
-  cli::cli_inform("PR データ取得を開始します。max_repo_pages={max_repo_pages}, max_pr_pages={max_pr_pages}")
-  pr_data <- run_fetch_pipeline(max_repo_pages, max_pr_pages)
-
-  cli::cli_inform("メトリクスデータセットを構築します。")
-  metrics <- build_metrics_dataset(pr_data)
-
   settings <- config_instance()
   files_dir <- settings$output$files_dir
   viz_dir <- settings$output$viz_dir
 
-  dir.create(files_dir, recursive = TRUE, showWarnings = FALSE)
-  dir.create(viz_dir, recursive = TRUE, showWarnings = FALSE)
-
   data_path <- file.path(files_dir, "github_activity_metrics.csv")
-  utils::write.csv(metrics, data_path, row.names = FALSE, na = "")
-  cli::cli_inform("メトリクス CSV を出力しました: {data_path}")
+
+  if (!file.exists(data_path)) {
+    cli::cli_abort("メトリクスCSVが見つかりません: {data_path}")
+  }
+
+  cli::cli_inform("メトリクスCSVを読み込みます: {data_path}")
+  metrics <- utils::read.csv(data_path, stringsAsFactors = FALSE)
+  metrics$period_start <- as.Date(metrics$period_start)
+
+  dir.create(viz_dir, recursive = TRUE, showWarnings = FALSE)
 
   plot_specs <- list(
     list(metric = "pr_count", file = "pr_trends.png", aggregation = "sum", y_label = "PR Count"),
@@ -83,13 +65,12 @@ main <- function() {
         title = spec$title,
         y_label = spec$y_label,
         y_limits = spec$y_limits %||% NULL,
-        chart_type = spec$chart_type %||% "line",
-        label_repos = settings$github$target_repos
+        chart_type = spec$chart_type %||% "line"
       )
     }
   )
 
-  cli::cli_inform("パイプライン処理が完了しました。")
+  cli::cli_inform("グラフ再生成が完了しました。")
 }
 
 if (identical(environment(), globalenv())) {

@@ -30,6 +30,11 @@ GitHubActivityService <- setRefClass(
       client$get(endpoint, query = query, paginate = TRUE, max_pages = max_pages)
     },
 
+    get_pull_request = function(repo, number) {
+      endpoint <- sprintf("repos/%s/pulls/%s", repo, number)
+      client$get(endpoint, paginate = FALSE)
+    },
+
     list_pull_request_reviews = function(repo, number, per_page = 100, max_pages = Inf) {
       endpoint <- sprintf("repos/%s/pulls/%s/reviews", repo, number)
       query <- list(per_page = per_page)

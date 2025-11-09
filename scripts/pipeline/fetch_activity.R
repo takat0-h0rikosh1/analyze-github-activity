@@ -63,6 +63,14 @@ run_fetch_pipeline <- function(max_repo_pages = 1,
     )
 
     pulls_norm <- lapply(pulls, function(pr) {
+      pr_detail <- tryCatch(
+        svc$get_pull_request(repo = repo_name, number = pr$number),
+        error = function(err) {
+          cli::cli_warn("PR詳細取得に失敗 ({repo_name}#{pr$number}): {err$message}")
+          NULL
+        }
+      )
+
       list(
         repo = repo_name,
         number = pr$number,
@@ -74,9 +82,9 @@ run_fetch_pipeline <- function(max_repo_pages = 1,
         author = pr$user$login,
         actor_type = label_actor_type(pr$user$login, agent_users),
         ai_phase = label_ai_phase(as.Date(pr$created_at)),
-        additions = pr$additions %||% NA_real_,
-        deletions = pr$deletions %||% NA_real_,
-        changed_files = pr$changed_files %||% NA_integer_,
+        additions = pr_detail$additions %||% pr$additions %||% NA_real_,
+        deletions = pr_detail$deletions %||% pr$deletions %||% NA_real_,
+        changed_files = pr_detail$changed_files %||% pr$changed_files %||% NA_integer_,
         merged_by = pr$merged_by$login %||% NA_character_,
         is_bug_fix = detect_bug_fix(pr),
         is_revert = detect_revert(pr),
