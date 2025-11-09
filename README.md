@@ -199,14 +199,6 @@ AI_LOOKBACK_DAYS=180
 
 詳細は [実行手順ガイド](./docs/execution_guide.md#トラブルシューティング) を参照してください。
 
-## ライセンス
-
-このプロジェクトのライセンスについては、プロジェクト管理者にお問い合わせください。
-
-## 貢献
-
-バグ報告や機能要望は Issue でお知らせください。
-
 ## 参考資料
 
 - [GitHub REST API ドキュメント](https://docs.github.com/en/rest)
