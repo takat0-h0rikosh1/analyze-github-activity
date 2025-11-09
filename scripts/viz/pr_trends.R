@@ -73,8 +73,8 @@ plot_metric_trend <- function(metrics,
 
   filtered <- metrics %>%
     dplyr::filter(
-      metric_name == metric_name,
-      interval == interval,
+      metric_name == .env$metric_name,
+      interval == .env$interval,
       repo %in% repos
     )
 
