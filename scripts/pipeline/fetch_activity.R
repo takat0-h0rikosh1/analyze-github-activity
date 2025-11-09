@@ -48,8 +48,11 @@ run_fetch_pipeline <- function(max_repo_pages = 1,
   cli::cli_inform("取得リポジトリ数: {length(repos)}")
 
   agent_users <- settings$github$agent_users
+  pr_since <- as.POSIXct(settings$ai$pre_start)
   commit_since <- as.POSIXct(settings$ai$pre_start)
   results <- list()
+
+  cli::cli_inform("データ取得期間: {settings$ai$pre_start} 以降（{settings$ai$lookback_days} 日間）")
 
   for (repo in repos) {
     repo_name <- repo$full_name %||% repo$name
@@ -61,6 +64,14 @@ run_fetch_pipeline <- function(max_repo_pages = 1,
       per_page = 100,
       max_pages = max_pr_pages
     )
+
+    # 日付フィルタリング: pre_start 以降に作成された PR のみを対象
+    pulls <- Filter(function(pr) {
+      created_at <- as.POSIXct(pr$created_at)
+      !is.na(created_at) && created_at >= pr_since
+    }, pulls)
+
+    cli::cli_inform("  フィルタ後の PR 件数: {length(pulls)}")
 
     pulls_norm <- lapply(pulls, function(pr) {
       pr_detail <- tryCatch(
@@ -198,35 +209,20 @@ run_fetch_pipeline <- function(max_repo_pages = 1,
 }
 
 main <- function() {
-  args <- commandArgs(trailingOnly = TRUE)
-  max_repo_pages <- 1
-  max_pr_pages <- 1
-  max_review_pages <- 1
-  max_comment_pages <- 1
-  max_commit_pages <- 1
+  settings <- config_instance()
 
-  if (length(args) >= 1) {
-    max_repo_pages <- as.integer(args[[1]])
-  }
-  if (length(args) >= 2) {
-    max_pr_pages <- as.integer(args[[2]])
-  }
-  if (length(args) >= 3) {
-    max_review_pages <- as.integer(args[[3]])
-  }
-  if (length(args) >= 4) {
-    max_comment_pages <- as.integer(args[[4]])
-  }
-  if (length(args) >= 5) {
-    max_commit_pages <- as.integer(args[[5]])
-  }
+  max_repo_pages <- settings$github$max_repo_pages
+  max_pr_pages <- settings$github$max_pr_pages
+  max_review_pages <- settings$github$max_review_pages
+  max_comment_pages <- settings$github$max_comment_pages
+  max_commit_pages <- settings$github$max_commit_pages
 
   data <- run_fetch_pipeline(
-    max_repo_pages,
-    max_pr_pages,
-    max_review_pages,
-    max_comment_pages,
-    max_commit_pages
+    max_repo_pages = max_repo_pages,
+    max_pr_pages = max_pr_pages,
+    max_review_pages = max_review_pages,
+    max_comment_pages = max_comment_pages,
+    max_commit_pages = max_commit_pages
   )
   cli::cli_inform("取得完了。リポジトリ数: {length(data)}")
 }

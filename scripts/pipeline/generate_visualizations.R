@@ -20,19 +20,25 @@ run_fetch_pipeline <- fetch_env$run_fetch_pipeline
 }
 
 main <- function() {
-  args <- commandArgs(trailingOnly = TRUE)
-  max_repo_pages <- 1L
-  max_pr_pages <- 1L
+  settings <- config_instance()
 
-  if (length(args) >= 1 && nzchar(args[[1]])) {
-    max_repo_pages <- as.integer(args[[1]])
-  }
-  if (length(args) >= 2 && nzchar(args[[2]])) {
-    max_pr_pages <- as.integer(args[[2]])
-  }
+  max_repo_pages <- settings$github$max_repo_pages
+  max_pr_pages <- settings$github$max_pr_pages
+  max_review_pages <- settings$github$max_review_pages
+  max_comment_pages <- settings$github$max_comment_pages
+  max_commit_pages <- settings$github$max_commit_pages
 
-  cli::cli_inform("PR データ取得を開始します。max_repo_pages={max_repo_pages}, max_pr_pages={max_pr_pages}")
-  pr_data <- run_fetch_pipeline(max_repo_pages, max_pr_pages)
+  cli::cli_inform("PR データ取得を開始します。")
+  cli::cli_inform("  max_repo_pages={max_repo_pages}, max_pr_pages={max_pr_pages}")
+  cli::cli_inform("  max_review_pages={max_review_pages}, max_comment_pages={max_comment_pages}, max_commit_pages={max_commit_pages}")
+
+  pr_data <- run_fetch_pipeline(
+    max_repo_pages = max_repo_pages,
+    max_pr_pages = max_pr_pages,
+    max_review_pages = max_review_pages,
+    max_comment_pages = max_comment_pages,
+    max_commit_pages = max_commit_pages
+  )
 
   cli::cli_inform("メトリクスデータセットを構築します。")
   metrics <- build_metrics_dataset(pr_data)

@@ -65,6 +65,31 @@ Config <- setRefClass(
         rate_padding <- 0
       }
 
+      max_repo_pages <- suppressWarnings(as.integer(Sys.getenv("GITHUB_MAX_REPO_PAGES", unset = "1")))
+      if (is.na(max_repo_pages) || max_repo_pages < 1) {
+        max_repo_pages <- 1L
+      }
+
+      max_pr_pages <- suppressWarnings(as.integer(Sys.getenv("GITHUB_MAX_PR_PAGES", unset = "100")))
+      if (is.na(max_pr_pages) || max_pr_pages < 1) {
+        max_pr_pages <- 100L
+      }
+
+      max_review_pages <- suppressWarnings(as.integer(Sys.getenv("GITHUB_MAX_REVIEW_PAGES", unset = "10")))
+      if (is.na(max_review_pages) || max_review_pages < 1) {
+        max_review_pages <- 10L
+      }
+
+      max_comment_pages <- suppressWarnings(as.integer(Sys.getenv("GITHUB_MAX_COMMENT_PAGES", unset = "10")))
+      if (is.na(max_comment_pages) || max_comment_pages < 1) {
+        max_comment_pages <- 10L
+      }
+
+      max_commit_pages <- suppressWarnings(as.integer(Sys.getenv("GITHUB_MAX_COMMIT_PAGES", unset = "50")))
+      if (is.na(max_commit_pages) || max_commit_pages < 1) {
+        max_commit_pages <- 50L
+      }
+
       list(
         token = token,
         org = org,
@@ -75,7 +100,12 @@ Config <- setRefClass(
         user_agent = user_agent,
         request_pause_sec = request_pause,
         rate_limit_threshold = rate_threshold,
-        rate_limit_padding_sec = rate_padding
+        rate_limit_padding_sec = rate_padding,
+        max_repo_pages = max_repo_pages,
+        max_pr_pages = max_pr_pages,
+        max_review_pages = max_review_pages,
+        max_comment_pages = max_comment_pages,
+        max_commit_pages = max_commit_pages
       )
     },
 
@@ -89,7 +119,15 @@ Config <- setRefClass(
         ))
       }
 
-      lookback_days <- 365L
+      lookback_days_raw <- Sys.getenv("AI_LOOKBACK_DAYS", unset = "180")
+      lookback_days <- suppressWarnings(as.integer(lookback_days_raw))
+      if (is.na(lookback_days) || lookback_days < 1) {
+        cli::cli_abort(c(
+          "Environment variable {.envvar AI_LOOKBACK_DAYS} must be a positive integer.",
+          i = "Got: {.val {lookback_days_raw}}"
+        ))
+      }
+
       list(
         t0 = t0_date,
         pre_start = t0_date - lookback_days,
