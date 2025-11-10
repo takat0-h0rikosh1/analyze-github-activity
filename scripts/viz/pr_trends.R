@@ -19,7 +19,7 @@ suppressWarnings({
   }
 }
 
-build_plot_labels <- function(metric_name, interval, repo_names) {
+build_plot_labels <- function(metric_name, interval, repo_names, aggregation = NULL, chart_type = NULL) {
   lang <- tolower(Sys.getenv("PLOT_LABEL_LANGUAGE", unset = "en"))
   repo_names <- repo_names %||% "ALL"
   repo_names <- unique(repo_names)
@@ -35,17 +35,41 @@ build_plot_labels <- function(metric_name, interval, repo_names) {
     paste(repo_names, collapse = ", ")
   }
 
+  # 集計方法のラベルを追加
+  agg_label <- ""
+  if (!is.null(aggregation) && !is.null(chart_type)) {
+    if (chart_type == "stacked_with_line") {
+      if (lang == "ja") {
+        agg_label <- if (aggregation == "sum") {
+          " / 折れ線: 合計値"
+        } else if (aggregation == "mean") {
+          " / 折れ線: 平均値"
+        } else {
+          ""
+        }
+      } else {
+        agg_label <- if (aggregation == "sum") {
+          " / Line: Total"
+        } else if (aggregation == "mean") {
+          " / Line: Average"
+        } else {
+          ""
+        }
+      }
+    }
+  }
+
   if (lang == "ja") {
     list(
       title = sprintf("%s 指標推移", metric_name),
-      subtitle = sprintf("粒度: %s / リポジトリ: %s", interval, repo_label),
+      subtitle = sprintf("粒度: %s / リポジトリ: %s%s", interval, repo_label, agg_label),
       x_label = sprintf("集計期間（%s）", interval),
       color_label = "アクター種別"
     )
   } else {
     list(
       title = sprintf("%s Trend", metric_name),
-      subtitle = sprintf("Interval: %s / Repos: %s", interval, repo_label),
+      subtitle = sprintf("Interval: %s / Repos: %s%s", interval, repo_label, agg_label),
       x_label = sprintf("Period (%s)", interval),
       color_label = "Actor Type"
     )
@@ -79,7 +103,7 @@ plot_metric_trend <- function(metrics,
   if (is.null(repo_names_for_label) || !length(repo_names_for_label)) {
     repo_names_for_label <- repos
   }
-  labels <- build_plot_labels(metric_name, interval, repo_names_for_label)
+  labels <- build_plot_labels(metric_name, interval, repo_names_for_label, aggregation, chart_type)
   title <- title %||% labels$title
   subtitle <- labels$subtitle
 
