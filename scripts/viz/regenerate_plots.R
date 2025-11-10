@@ -31,21 +31,17 @@ main <- function() {
   dir.create(viz_dir, recursive = TRUE, showWarnings = FALSE)
 
   plot_specs <- list(
-    list(metric = "pr_count", file = "pr_trends.png", aggregation = "sum", y_label = "PR Count"),
+    # 積み上げグラフのみ（折れ線グラフは削除）
     list(metric = "pr_count", file = "pr_trends_stacked.png", aggregation = "sum", y_label = "PR Count", chart_type = "stacked_with_line"),
-    list(metric = "commit_count", file = "commit_trends.png", aggregation = "sum", y_label = "Commit Count"),
     list(metric = "commit_count", file = "commit_trends_stacked.png", aggregation = "sum", y_label = "Commit Count", chart_type = "stacked_with_line"),
-    list(metric = "lines_added", file = "lines_added.png", aggregation = "sum", y_label = "Lines Added"),
     list(metric = "lines_added", file = "lines_added_stacked.png", aggregation = "sum", y_label = "Lines Added", chart_type = "stacked_with_line"),
-    list(metric = "lines_deleted", file = "lines_deleted.png", aggregation = "sum", y_label = "Lines Deleted"),
     list(metric = "lines_deleted", file = "lines_deleted_stacked.png", aggregation = "sum", y_label = "Lines Deleted", chart_type = "stacked_with_line"),
-    list(metric = "pr_lead_time_hours", file = "pr_lead_time.png", aggregation = "mean", y_label = "Average Lead Time (hours)"),
     list(metric = "pr_lead_time_hours", file = "pr_lead_time_stacked.png", aggregation = "mean", y_label = "Average Lead Time (hours)", chart_type = "stacked_with_line"),
+    list(metric = "pr_comment_count", file = "pr_comment_count_stacked.png", aggregation = "mean", y_label = "Comments per PR", chart_type = "stacked_with_line"),
+    # 折れ線グラフのみ（積み上げグラフがない指標）
     list(metric = "review_to_approval_time_hours", file = "review_to_approval_time.png", aggregation = "mean", y_label = "Review to Approval (hours)"),
     list(metric = "review_response_time_hours", file = "review_response_time.png", aggregation = "mean", y_label = "Review Response Time (hours)"),
     list(metric = "pr_first_review_time_hours", file = "first_review_time.png", aggregation = "mean", y_label = "Time to First Review (hours)"),
-    list(metric = "pr_comment_count", file = "pr_comment_count.png", aggregation = "mean", y_label = "Comments per PR"),
-    list(metric = "pr_comment_count", file = "pr_comment_count_stacked.png", aggregation = "mean", y_label = "Comments per PR", chart_type = "stacked_with_line"),
     list(metric = "review_iteration_count", file = "review_iteration_count.png", aggregation = "mean", y_label = "Review Iterations"),
     list(metric = "bug_fix_ratio", file = "bug_fix_ratio.png", aggregation = "mean", y_label = "Bug Fix Ratio", y_limits = c(0, 1)),
     list(metric = "revert_pr_count", file = "revert_pr_count.png", aggregation = "sum", y_label = "Reverted PRs")

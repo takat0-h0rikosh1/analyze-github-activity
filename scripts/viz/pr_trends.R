@@ -41,17 +41,17 @@ build_plot_labels <- function(metric_name, interval, repo_names, aggregation = N
     if (chart_type == "stacked_with_line") {
       if (lang == "ja") {
         agg_label <- if (aggregation == "sum") {
-          " / 折れ線: 合計値"
+          " / 棒: リポジトリ別合計値, 折れ線: 全体合計値"
         } else if (aggregation == "mean") {
-          " / 折れ線: 平均値"
+          " / 棒: リポジトリ別平均値, 折れ線: 全体平均値"
         } else {
           ""
         }
       } else {
         agg_label <- if (aggregation == "sum") {
-          " / Line: Total"
+          " / Bar: Per-Repo Total, Line: Overall Total"
         } else if (aggregation == "mean") {
-          " / Line: Average"
+          " / Bar: Per-Repo Avg, Line: Overall Avg"
         } else {
           ""
         }
